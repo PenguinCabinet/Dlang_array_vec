@@ -272,5 +272,35 @@ class array(T)
 		return A;
 	}
 
+	array opAssign(array a){
+		if(is(typeof(a.data.init) == typeof(data.init))){
+			throw new StringException("The type of the substitution destination and the type of the substitution source are not equal");
+		};
+
+		shape=a.shape.dup;
+		data=a.data.dup;
+
+		array!T A;
+
+		A.shape=shape.dup;
+		A.data=data.dup;
+
+		return A;
+	};
+
+	array opBinary(string op)(T a) {
+		array!T A=new array!T();
+		A=
+
+		if(op=="+"){
+			A.data[]+=a;
+		}
+		if(op=="-"){
+			A.data[]-=a;
+		}
+
+		return A;
+	}
+
 
 };
