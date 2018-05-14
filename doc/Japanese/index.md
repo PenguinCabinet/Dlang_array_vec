@@ -7,4 +7,6 @@ Dlang_array_vecはD言語のための多次元配列数値計算ライブラリ�
 - [チュートリアル](tutorial.md)
 
 - ドキュメント
-  - [vec.array](tutorial.md)
+  - vec.array
+
+- [TODO](TODO.md)

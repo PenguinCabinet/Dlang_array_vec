@@ -199,7 +199,11 @@ class array(T)
 
 		};
 		array opIndex(T1...)(T1 a){
-			return index_array(surface_index_to_index(args_to_array!int(a),false));
+			int[] index_data=new int[a.length];
+			foreach (i,e; a){
+				index_data[i]=e;
+			}
+			return index_array(surface_index_to_index(index_data,false));
 		}
 	};
 
