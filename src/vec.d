@@ -4,57 +4,57 @@ import std.exception;
 import std.string;
 import core.vararg;
 import std.conv;
-
-uint my_array_all_multiplication(in uint[] d,in uint n1,in uint n2){
-	if(d.length==n1)return 1;
-
-	return d[0..(d.length-n1)].fold!( (a, b) => a*b);
-}
-
-uint[] my_array_all_func(T1...)(T1 delegate(T1,T1) func,T1 a){
-	A=new int[a[0].length];
-	foreach(e1;a){
-		foreach(e2;e1){
-			A[i]=func(A[i],e2);
-		}
-	}
-	return A;
-}
-
-T[] my_array_map_func(T)(T[] a,T delegate(T) func){
-	T[] A=new int[a.length];
-	foreach(i,e;a){
-		A[i]=func(e);
-	}
-	return A;
-}
-
-T[] args_to_array(T)(T[] a){
-	return a;
-}
-
-T[] args_to_array(T)(T a){
-	return [a];
-}
+import std.traits;
 
 
-/*
-array make_array_func1(in array a,in ulong[] s1,in ulong[] s2){
-
-	foreach(i,e;)
-
-	array A;
-
-};*/
 
 class array(T)
 {
+
+	static array!T make(T2)(T2 a){
+		uint[] temp_shape;
+
+		void temp1(T3)(T3 a1){
+			static if(is(T3==string)||!isArray!(T3)){
+			}
+			else{
+				temp_shape~=a1.length;
+				temp1(a1[0]);
+			}
+		};
+
+		temp1(a);
+
+		array!T A= new array!T(temp_shape);
+
+		void temp2(T3)(T3 a1,in uint[] temp_index=[]){
+			static if(is(T3==string)||!isArray!(T3)){
+				A.index(temp_index)=a1;
+			}
+			else {
+				for (uint i=0;i<A.shape[temp_index.length] ; i++) {
+						temp2(a1[i],temp_index~i);
+				}
+			}
+		};
+
+		temp2(a);
+
+		return A;
+	};
+
+
+	private uint my_array_all_multiplication(in uint[] d,in uint n1,in uint n2){
+		if(d.length==n1)return 1;
+
+		return d[n1..$].fold!( (a, b) => a*b);
+	}
 
 	T[] data;
 
 	uint[] shape;
 
-	uint[] surface_index_to_index(in int[] i_data,bool Dimensions_check=true){
+	private uint[] surface_index_to_index(in int[] i_data,bool Dimensions_check=true){
 		if(i_data.length!=shape.length&&Dimensions_check){
 			throw new StringException("Dimensions are not equal");
 		}
@@ -110,11 +110,6 @@ class array(T)
 		return data[I];
 	}
 
-	T Get_index(in uint[] i_data){
-		return index(i_data);
-	}
-
-
 	ref T opIndex(T1...)(T1 a){
 		int[] index_data=new int[a.length];
 		foreach (i,e; a){
@@ -129,7 +124,8 @@ class array(T)
 		data=[];
 		shape=[];
 	}
-	void slice(ref array A,in uint[] add_data,ref in uint[] size_data,in uint[] temp_index1=[],in uint[] temp_index2=[]){
+
+	private void slice(ref array A,in uint[] add_data,ref in uint[] size_data,in uint[] temp_index1=[],in uint[] temp_index2=[]){
 		for (uint i=0;i<size_data[temp_index1.length] ; i++) {
 			if(size_data.length==temp_index1.length+1){
 					A.index(temp_index1~i)=index(temp_index2~(add_data[temp_index1.length]+i));
@@ -141,7 +137,7 @@ class array(T)
 	};
 
 
-	array slice(in int[] a1,in int[] a2){
+	private array slice(in int[] a1,in int[] a2){
 		if(a1.length==a2.length){
 			throw new StringException("The sizes specified for slice are not equal");
 		}
@@ -167,7 +163,7 @@ class array(T)
 		return A;
 	}
 
-	void index_array(ref array A,in uint[] base_index,in uint[] size_data,in uint[] temp_index=[]){
+	private void index_array(ref array A,in uint[] base_index,in uint[] size_data,in uint[] temp_index=[]){
 		for (uint i=0;i<size_data[temp_index.length] ; i++) {
 			if(size_data.length==temp_index.length+1){
 				A.index(temp_index~i)=index(base_index~temp_index~i);
@@ -178,7 +174,7 @@ class array(T)
 		}
 	};
 
-	array index_array(in uint[] a){
+	private array index_array(in uint[] a){
 		if(a.length==0){
 			throw new StringException("index dimension is 0");
 		}
@@ -194,7 +190,7 @@ class array(T)
 		return A;
 	}
 
-	class index_array_class{
+	private class index_array_class{
 		this(){
 
 		};
@@ -230,7 +226,7 @@ class array(T)
 		return A;
 	};
 
-	string range_Make_str(in string a,in uint n){
+	private string range_Make_str(in string a,in uint n){
 		string A;
 		for (uint i=0;i<n;i++) {
 			A~=a;
@@ -239,7 +235,7 @@ class array(T)
 		return A;
 	}
 
-	void toString(ref string A,in uint[] temp_index=[]){
+	private void toString(ref string A,in uint[] temp_index=[]){
 		A~=range_Make_str("\t",temp_index.length);
 		A~="[";
 
@@ -272,31 +268,74 @@ class array(T)
 		return A;
 	}
 
-	array opAssign(array a){
-		if(is(typeof(a.data.init) == typeof(data.init))){
-			throw new StringException("The type of the substitution destination and the type of the substitution source are not equal");
+	private void set(array a,uint[] index_data){
+
+		if(shape.length<=index_data.length){
+			throw new StringException("The dimension of index is beyond the dimension of the array.");
+		}
+
+		if(shape[index_data.length..$]!=a.shape){
+			throw new StringException("The shape of the assigned arrays are not equal.");
+		}
+
+
+		void temp(array a,in uint[] temp_index=[]){
+			for (uint i=0;i<shape[index_data.length..$][temp_index.length] ; i++) {
+				if(shape.length-index_data.length==temp_index.length+1){
+					index(index_data~temp_index~i)=a.index(temp_index~i);
+				}
+				else{
+					temp(a,temp_index~i);
+				}
+			}
+
 		};
 
-		shape=a.shape.dup;
-		data=a.data.dup;
+		temp(a);
+	};
 
-		array!T A;
+	void opIndexAssign(T1...)(array a,T1 a2){
+
+		int[] index_data=new int[a2.length];
+		foreach (i,e; a2){
+			index_data[i]=e;
+		}
+
+		set(a,surface_index_to_index(index_data,false));
+
+	}
+
+	void opIndexAssign(T1...)(T a,T1 a2){
+		opIndex(a2)=a;
+	}
+
+
+	array opUnary(string s)() if (s == "-") {
+		array!T A=new array!T();
 
 		A.shape=shape.dup;
-		A.data=data.dup;
+		A.data=-1*data.dup[];
 
 		return A;
-	};
+	}
 
 	array opBinary(string op)(T a) {
 		array!T A=new array!T();
-		A=
 
 		if(op=="+"){
 			A.data[]+=a;
 		}
 		if(op=="-"){
 			A.data[]-=a;
+		}
+		if(op=="*"){
+			A.data[]*=a;
+		}
+		if(op=="/"){
+			A.data[]/=a;
+		}
+		if(op=="%"){
+			A.data[]%=a;
 		}
 
 		return A;

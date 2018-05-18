@@ -231,3 +231,52 @@ void main(){
 [3, 5]
 
 ```
+
+## D言語配列をDlang_array_vecの配列へ変換
+
+array.makeを使って下さい。
+
+```D:main.d
+import vec;
+import std.stdio;
+
+void main(){
+
+array!(int) data = array!int.make([[1,2,3],[4,5,6]]);
+}
+
+```
+
+## indexを指定して配列に代入する
+
+直感的に代入出来ます。
+
+```D:main.d
+import vec;
+import std.stdio;
+
+void main(){
+
+array!(int) data = array!int.make([[1,2,3],[4,5,6]]);
+
+writef("%s\n",data);
+
+data[1] = array!int.make([1,2,3]);
+
+writef("%s\n",data);
+}
+
+```
+
+表示
+
+```
+[
+        [1,2,3],
+        [4,5,6]
+]
+[
+        [1,2,3],
+        [1,2,3]
+]
+```
