@@ -59,3 +59,7 @@ I am making it.
 [document](doc/Japanese/index.md)<br>
 
 [tutorial](doc/Japanese/tutorial.md)
+
+# License
+
+MIT license
