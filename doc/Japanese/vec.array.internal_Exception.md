@@ -1,6 +1,6 @@
 # vec.array.internal_Exception
 
-vec.array.internal_ExceptionはDlang_array_vec内部の例外用のクラスです。<br>
+vec.array.internal_Exceptionはvec.array内部の例外用のクラスです。<br>
 使い方も普通の例外と同じように使えます。
 
 ```D:main.d

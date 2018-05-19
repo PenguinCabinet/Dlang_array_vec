@@ -321,7 +321,7 @@ class array(T)
 
 
 	array opUnary(string s)() if (s == "-") {
-		array!T A=new array!T(shape);
+		array!T A=clone();
 
 		A.shape=shape.dup;
 		A.data=-1*data.dup[];
@@ -330,7 +330,7 @@ class array(T)
 	}
 
 	array opBinary(string op)(T a) {
-		array!T A=new array!T(shape);
+		array!T A=clone();
 
 		if(op=="+"){
 			A.data[]+=a;
@@ -347,15 +347,63 @@ class array(T)
 		if(op=="%"){
 			A.data[]%=a;
 		}
+		if(op=="^^"){
+			A.data[]^^=a;
+		}
 
 		return A;
 	}
 
+	array opBinary(string op)(array a) {
+		if(shape!=a.shape){
+			throw new internal_Exception("Array shape are not equal.");
+		}
+
+		array!T A=new array!T(shape);
+
+		if(op=="+"){
+			A.data[]=data[]+a.data[];
+		}
+		if(op=="-"){
+			A.data[]=data[]-a.data[];
+		}
+		if(op=="*"){
+			A.data[]=data[]*a.data[];
+		}
+		if(op=="/"){
+			A.data[]=data[]/a.data[];
+		}
+		if(op=="%"){
+			A.data[]=data[]%a.data[];
+		}
+		if(op=="^^"){
+			A.data[]=data[]^^a.data[];
+		}
+
+		return A;
+	}
+
+	void opOpAssign(string op)(T a){
+		data=opBinary(op)(a).data;
+	}
+
+	void opOpAssign(string op)(array a){
+		data=opBinary(op)(a).data;
+	}
+
+
 	array clone(){
-		array!T A= new array(shape);
+		array!T A= new array!T(shape);
 		A.data=data.dup;
 		return A;
 	}
 
+	array map(T function(T) func){
+		array!T A=clone();
+		foreach(ref e;A.data){
+			e=func(e);
+		};
+		return A;
+	};
 
 };

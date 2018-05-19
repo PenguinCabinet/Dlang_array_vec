@@ -1,7 +1,7 @@
 # 初めに
 
 初めにimportしないと始められません。<br>
-このプロジェクトをクローンしてsrcファイルをコピーしてください。
+このプロジェクトをクローンしてsrcファイルをコピーしてください。<br>
 以上で導入は完了です
 
 # 配列の定義
@@ -24,7 +24,7 @@ void main(){
 
 
 ```shell:コンパイル
-dmd -Isrc/ src/vec.d main.d
+dmd -Isrc/　src/vec_outside_Exception.d src/vec_math_tool.d src/vec.d main.d
 ```
 
 お気づきの方もいらっしゃると思いますが、要素の型を変えることもできます。
