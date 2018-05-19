@@ -11,6 +11,16 @@ import std.traits;
 class array(T)
 {
 
+	class internal_Exception : Exception {
+		array!T error_data;
+
+		this(string s){
+			super(s);
+			error_data= new array!T(shape);
+			error_data.data=data;
+		}
+	};
+
 	static array!T make(T2)(T2 a){
 		uint[] temp_shape;
 
@@ -56,7 +66,7 @@ class array(T)
 
 	private uint[] surface_index_to_index(in int[] i_data,bool Dimensions_check=true){
 		if(i_data.length!=shape.length&&Dimensions_check){
-			throw new StringException("Dimensions are not equal");
+			throw new internal_Exception("Dimensions are not equal");
 		}
 
 		uint[] A=new uint[i_data.length];
@@ -70,7 +80,7 @@ class array(T)
 			}
 
 			if(temp>=shape[i]||temp<0){
-				throw new StringException("array index is out of range");
+				throw new internal_Exception("array index is out of range");
 			}
 
 			A[i]=temp;
@@ -81,8 +91,8 @@ class array(T)
 
 	void resize(in uint[] size){
 		shape=size.dup;
-		if(size.fold!( (a, b) => a*b)<=0){
-			throw new StringException("The specified size is less than or equal to 0");
+		if(shape.length>0&&size.fold!( (a, b) => a*b)<=0){
+			throw new internal_Exception("The specified size is less than or equal to 0");
 		}
 		data=new T[size.fold!( (a, b) => a*b)];
 	}
@@ -110,7 +120,7 @@ class array(T)
 		return data[I];
 	}
 
-	ref T opIndex(T1...)(T1 a){
+	ref T opIndex(int[] a ...){
 		int[] index_data=new int[a.length];
 		foreach (i,e; a){
 			index_data[i]=e;
@@ -139,7 +149,7 @@ class array(T)
 
 	private array slice(in int[] a1,in int[] a2){
 		if(a1.length==a2.length){
-			throw new StringException("The sizes specified for slice are not equal");
+			throw new internal_Exception("The sizes specified for slice are not equal");
 		}
 
 		uint[] ta1=surface_index_to_index(a1,false);
@@ -176,13 +186,13 @@ class array(T)
 
 	private array index_array(in uint[] a){
 		if(a.length==0){
-			throw new StringException("index dimension is 0");
+			throw new internal_Exception("index dimension is 0");
 		}
 		if(a.length>shape.length){
-			throw new StringException("Too many dimensions for index");
+			throw new internal_Exception("Too many dimensions for index");
 		}
 		if(a.length==shape.length){
-			throw new StringException("Please use opIndex if the dimension size of index is equal to the dimension size of shape");
+			throw new internal_Exception("Please use opIndex if the dimension size of index is equal to the dimension size of shape");
 		}
 
 		array!T A=new array!T(shape[a.length..$]);
@@ -194,7 +204,7 @@ class array(T)
 		this(){
 
 		};
-		array opIndex(T1...)(T1 a){
+		array opIndex(int[] a ...){
 			int[] index_data=new int[a.length];
 			foreach (i,e; a){
 				index_data[i]=e;
@@ -271,11 +281,11 @@ class array(T)
 	private void set(array a,uint[] index_data){
 
 		if(shape.length<=index_data.length){
-			throw new StringException("The dimension of index is beyond the dimension of the array.");
+			throw new internal_Exception("The dimension of index is beyond the dimension of the array.");
 		}
 
 		if(shape[index_data.length..$]!=a.shape){
-			throw new StringException("The shape of the assigned arrays are not equal.");
+			throw new internal_Exception("The shape of the assigned arrays are not equal.");
 		}
 
 
@@ -294,7 +304,7 @@ class array(T)
 		temp(a);
 	};
 
-	void opIndexAssign(T1...)(array a,T1 a2){
+	void opIndexAssign(array a,int[] a2 ...){
 
 		int[] index_data=new int[a2.length];
 		foreach (i,e; a2){
@@ -305,13 +315,13 @@ class array(T)
 
 	}
 
-	void opIndexAssign(T1...)(T a,T1 a2){
+	void opIndexAssign(T a,int[] a2...){
 		opIndex(a2)=a;
 	}
 
 
 	array opUnary(string s)() if (s == "-") {
-		array!T A=new array!T();
+		array!T A=new array!T(shape);
 
 		A.shape=shape.dup;
 		A.data=-1*data.dup[];
@@ -320,7 +330,7 @@ class array(T)
 	}
 
 	array opBinary(string op)(T a) {
-		array!T A=new array!T();
+		array!T A=new array!T(shape);
 
 		if(op=="+"){
 			A.data[]+=a;
@@ -338,6 +348,12 @@ class array(T)
 			A.data[]%=a;
 		}
 
+		return A;
+	}
+
+	array clone(){
+		array!T A= new array(shape);
+		A.data=data.dup;
 		return A;
 	}
 

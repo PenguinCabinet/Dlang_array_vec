@@ -8,6 +8,8 @@ Dlang_array_vecはD言語のための多次元配列数値計算ライブラリ�
 
 - ドキュメント
   - vec.array
+  - 例外クラス
+    - [vec.array.internal_Exception](vec.array.internal_Exception.md)
 
 - [FAQ](FAQ.md)
 
