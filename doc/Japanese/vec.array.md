@@ -83,3 +83,48 @@ writeln(A);
 
 はコンパイルエラーを吐きます。<br>
 これは、D言語の演算子の仕様なので改善方法はありません。
+
+
+## resize
+
+データを維持しつつ、shapeを書き換えます。(縮小の場合は後ろから消える)
+
+```D:main.d
+import vec;
+import vec_math_tool;
+import std.stdio;
+
+
+void main(){
+
+array!(double) data = array!double.make([1,2,3,4,5,6]);
+
+writeln(data);
+
+writeln(data.shape);
+
+data.resize([2,3]);
+
+writeln("resize");
+
+writeln(data);
+
+writeln(data.shape);
+
+}
+```
+
+表示
+
+
+```
+[1,2,3,4,5,6]
+[6]
+resize
+[
+        [1,2,3],
+        [4,5,6]
+]
+[2, 3]
+
+```

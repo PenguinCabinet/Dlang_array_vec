@@ -94,7 +94,7 @@ class array(T)
 		if(shape.length>0&&size.fold!( (a, b) => a*b)<=0){
 			throw new internal_Exception("The specified size is less than or equal to 0");
 		}
-		data=new T[size.fold!( (a, b) => a*b)];
+		data.length=size.fold!( (a, b) => a*b);
 	}
 
 	this(){
