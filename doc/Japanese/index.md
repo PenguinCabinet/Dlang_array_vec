@@ -7,7 +7,7 @@ Dlang_array_vecはD言語のための多次元配列数値計算ライブラリ�
 - [チュートリアル](tutorial.md)
 
 - ドキュメント
-  - [vec.array](vec.array,md)
+  - [vec.array](vec.array.md)
   - [vec.vec_math_tool](vec.vec_math_tool.md)
   - 例外クラス
     - [vec.array.internal_Exception](vec.array.internal_Exception.md)

@@ -18,7 +18,7 @@ D言語のstd.mathの関数名で下記のようになっています。
 
 例えば、D言語のstd.mathのcosに相当する関数をDlang_array_vec上で使いたい場合は
 
-```
+```D:main.d
 import vec;
 import vec_math_tool;
 import std.stdio;
