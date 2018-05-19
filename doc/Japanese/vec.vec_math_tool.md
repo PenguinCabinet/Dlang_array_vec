@@ -2,7 +2,8 @@
 
 D言語のstd.mathのDlang_array_vec版を提供しています。<br>
 基本的に、D言語のstd.mathを全要素に行う形になっています。<br>
-関数名は基本的に vec_math_tool_ + D言語のstd.mathの関数となっています。
+関数名は基本的に vec_math_tool_ + D言語のstd.mathの関数となっています。<br>
+配列の要素の型はdouble、float、realのいずれかを使って下さい。
 
 ## 現在提供さている、関数
 
