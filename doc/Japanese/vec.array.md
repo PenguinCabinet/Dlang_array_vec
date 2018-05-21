@@ -220,4 +220,4 @@ debug_funcの関数の引数は(index,elem,例外を吐くときに使用され�
 debug_funcは例外を吐きたい条件になったらfalseを返してください。<br>
 array.debug_data_classにはelem_dataメンバに例外を吐いた時の要素、<br>
 にindex_dataメンバに例外を吐いた時のindex、<br>
-そして、そのまま出力すると、msgに代入されたメッセージと関数の位置が出力されます。<br>
+そして、そのまま出力すると、msgに代入されたメッセージと例外の吐かれた関数の位置が出力されます。<br>
