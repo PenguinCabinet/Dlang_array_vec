@@ -128,3 +128,96 @@ resize
 [2, 3]
 
 ```
+
+## Dlang_array_vecの配列からD言語配列へ変換
+
+to_D_arrayを使って下さい。
+
+```D:main.d
+import vec;
+import vec_math_tool;
+import std.stdio;
+
+
+void main(){
+
+array!(double) data = array!double.make([1,2,3,4,5,6]);
+
+data.resize([2,3]);
+
+auto data2=data.to_D_array!(double[][])();
+
+writeln(data2);
+writeln(typeid(typeof(data2)));
+
+}
+```
+
+表示
+
+```
+[[1, 2, 3], [4, 5, 6]]
+double[][]
+
+```
+
+D言語の静的型付けの影響で型指定が必要です。<br>
+型がshapeと会わない場合や要素の型と会わない場合などは例外が投げられます。
+
+## デバッグ機能
+
+Dlang_array_vecには先進的でユニークなデバッグ機能が付いています。<br>
+その一つが内部デバッグ機能です。<br>
+内部デバッグ機能とはvec.arrayクラスメソッドを呼び出すたびに任意の関数を呼び出して、おかしな値がないか全ての要素を精査する事が出来ます。<br>
+では、こちらのソースコードをご覧ください。
+
+```D:main.d
+import vec;
+import vec_math_tool;
+import std.stdio;
+import std.math;
+
+void main(){
+
+try{
+    array!(real) data = array!real.make([0,1,2,3,4,5]);
+
+    data.debug_mode=true;
+
+    data.debug_func=(int[] index,real e,ref string msg){
+      msg="number is infinity.";
+      return !isInfinity(e);
+    };
+    //無限大の場合は例外を吐くようにする
+
+    data=vec_math_tool_log(data);
+    //0のlogは無限大
+
+  }
+  catch(array!real.debug_data_class e){
+    writeln(e.index_data);
+    writeln(e.elem_data);
+    writeln(e);
+  }
+
+}
+```
+
+出力
+
+```
+[0]
+-inf
+~~~~: number is infinity.
+~~~~
+例外の吐かれた場所の情報
+~~~~
+```
+
+まず初めにdebug_modeにtrueを代入すると内部デバッグを行う事が出来ます。<br>
+その後、debug_funcに関数を代入します。<br>
+debug_funcの関数の引数は(index,elem,例外を吐くときに使用されるメッセージ)です。<br>
+debug_funcは例外を吐きたい条件になったらfalseを返してください。<br>
+array.debug_data_classにはelem_dataメンバに例外を吐いた時の要素、<br>
+にindex_dataメンバに例外を吐いた時のindex、<br>
+そして、そのまま出力すると、msgに代入されたメッセージと関数の位置が出力されます。<br>
