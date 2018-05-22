@@ -66,10 +66,10 @@ class array(T)
 
 
 	private class debug_data_class : Exception{
-		int[] index_data;
+		uint[] index_data;
 		T elem_data;
 
-		this(string s,int[] i,T elem){
+		this(string s,uint[] i,T elem){
 			super(s);
 			index_data=i.dup;
 			elem_data=elem;
@@ -77,11 +77,11 @@ class array(T)
 	};
 
 	bool debug_mode=false;
-  bool function(int[],T,ref string) debug_func;
+  bool delegate(uint[],T,ref string) debug_func;
 	bool Is_debug_running=false;
 
 
-	private void debug_check_func2(int[] temp_index){
+	private void debug_check_func2(uint[] temp_index){
 		if(debug_func is null)return;
 		if(shape.length==0)return;
 
@@ -92,13 +92,13 @@ class array(T)
 			}
 		}
 		else{
-			for (int i=0;i<shape[temp_index.length] ; i++) {
+			for (uint i=0;i<shape[temp_index.length] ; i++) {
 				debug_check_func2(temp_index~i);
 			}
 		}
 	};
 
-	private void debug_check_func2(array a,int[] temp_index){
+	private void debug_check_func2(array a,uint[] temp_index){
 		if(debug_func is null)return;
 		if(shape.length==0)return;
 
@@ -109,7 +109,7 @@ class array(T)
 			}
 		}
 		else{
-			for (int i=0;i<a.shape[temp_index.length] ; i++) {
+			for (uint i=0;i<a.shape[temp_index.length] ; i++) {
 				debug_check_func2(a,temp_index~i);
 			}
 		}
@@ -127,7 +127,7 @@ class array(T)
 	private void debug_check_func(array[] a ...){
 		if(!Is_debug_running&&debug_mode){
 				Is_debug_running=true;
-				for (int i=0;i<a.length ; i++) {
+				for (uint i=0;i<a.length ; i++) {
 					debug_check_func2(a[i],[]);
 				}
 				Is_debug_running=false;
@@ -148,20 +148,15 @@ class array(T)
 		}
 	}
 
-	private uint[] surface_index_to_index(in int[] i_data,bool Dimensions_check=true){
+	private uint[] surface_index_to_index(in uint[] i_data,bool Dimensions_check=true){
 		if(i_data.length!=shape.length&&Dimensions_check){
 			throw new internal_Exception("Dimensions are not equal");
 		}
 
 		uint[] A=new uint[i_data.length];
 		foreach(i,e;i_data){
-			int temp=0;
-			if(e<0){
-				temp=shape[i]-e;
-			}
-			else{
-				temp=e;
-			}
+			uint temp=0;
+			temp=e;
 
 			if(temp>=shape[i]||temp<0){
 				throw new internal_Exception("array index is out of range");
@@ -176,10 +171,12 @@ class array(T)
 	void resize(in uint[] size){
 		check_damage();
 		shape=size.dup;
-		if(shape.length>0&&size.fold!( (a, b) => a*b)<=0){
+		if(size.length>0&&size.fold!( (a, b) => a*b)<=0){
 			throw new internal_Exception("The specified size is less than or equal to 0");
 		}
-		data.length=size.fold!( (a, b) => a*b);
+		if(size.length!=0){
+			data.length=size.fold!( (a, b) => a*b);
+		}
 
 		debug_check_func();
 	}
@@ -218,10 +215,10 @@ class array(T)
 		return data[I];
 	}
 
-	ref T opIndex(int[] a ...){
+	ref T opIndex(uint[] a ...){
 		check_damage();
 
-		int[] index_data=new int[a.length];
+		uint[] index_data=new uint[a.length];
 		foreach (i,e; a){
 			index_data[i]=e;
 		}
@@ -255,7 +252,7 @@ class array(T)
 	};
 
 
-	private array slice(in int[] a1,in int[] a2){
+	private array slice(in uint[] a1,in uint[] a2){
 		if(a1.length==a2.length){
 			throw new internal_Exception("The sizes specified for slice are not equal");
 		}
@@ -264,7 +261,7 @@ class array(T)
 		uint[] ta2=[];
 
 		{
-			int[] temp=a2.dup;
+			uint[] temp=a2.dup;
 			foreach(ref e;temp){e-=1;}
 			ta2=surface_index_to_index(temp,false);
 			foreach(ref e;ta2){e+=1;}
@@ -312,9 +309,9 @@ class array(T)
 		this(){
 
 		};
-		array opIndex(int[] a ...){
+		array opIndex(uint[] a ...){
 			check_damage();
-			int[] index_data=new int[a.length];
+			uint[] index_data=new uint[a.length];
 			foreach (i,e; a){
 				index_data[i]=e;
 			}
@@ -326,7 +323,7 @@ class array(T)
 	index_array_class ia;
 
 
-	array opSlice(in int a1,in int a2){
+	array opSlice(in uint a1,in uint a2){
 		check_damage();
 		auto ta1=surface_index_to_index([a1],false);
 		auto ta2=surface_index_to_index([a2-1],false);
@@ -418,10 +415,10 @@ class array(T)
 		temp(a);
 	};
 
-	void opIndexAssign(array a,int[] a2 ...){
+	void opIndexAssign(array a,uint[] a2 ...){
 		check_damage();
 
-		int[] index_data=new int[a2.length];
+		uint[] index_data=new uint[a2.length];
 		foreach (i,e; a2){
 			index_data[i]=e;
 		}
@@ -431,7 +428,7 @@ class array(T)
 		debug_check_func();
 	}
 
-	void opIndexAssign(T a,int[] a2...){
+	void opIndexAssign(T a,uint[] a2...){
 		check_damage();
 
 		opIndex(a2)=a;
@@ -475,6 +472,24 @@ class array(T)
 		if(op=="^^"){
 			A.data[]^^=a;
 		}
+		if(op=="~"){
+			if(empty()){
+				A.shape=[1];
+				A.data=[a];
+			}
+			else{
+				if(A.shape.length==1){
+					uint[] temp=A.shape.dup;
+					temp[0]++;
+					A.resize(temp);
+					temp[0]--;
+					A[temp[0]]=a;
+				}
+				else{
+					throw new internal_Exception("This dimension different join is not supported.");
+				}
+			}
+		}
 
 		debug_check_func(A);
 		return A;
@@ -483,8 +498,10 @@ class array(T)
 	array opBinary(string op)(array a) {
 		check_damage();
 
-		if(shape!=a.shape){
-			throw new internal_Exception("Array shape are not equal.");
+		if(op!="~"){
+			if(shape!=a.shape){
+				throw new internal_Exception("Array shape are not equal.");
+			}
 		}
 
 		array!T A=new array!T(shape);
@@ -507,6 +524,47 @@ class array(T)
 		if(op=="^^"){
 			A.data[]=data[]^^a.data[];
 		}
+		if(op=="~"){
+			if(empty()){
+				A=a.clone();
+			}
+			else{
+				A=clone();
+				if(A.shape.length==a.shape.length){
+					if(A.shape.length>1&&A.shape[1..$]!=a.shape[1..$]){
+						throw new internal_Exception("The shape to be joined are not equal.");
+					}
+
+					uint[] temp=A.shape.dup;
+					temp[0]+=a.shape[0];
+					auto temp2=A.shape[0];
+					A.resize(temp);
+
+					for (uint i=temp2;i<A.shape[0] ; i++) {
+						if(a.shape.length==1){
+							A[i]=a[i-temp2];
+						}
+						else{
+							A[i]=a.ia[i-temp2];
+						}
+					}
+				}
+				else if(A.shape.length==a.shape.length+1){
+					if(A.shape.length>1&&shape[1..$]!=a.shape){
+						throw new internal_Exception("The shape to be joined are not equal.");
+					}
+					uint[] temp=A.shape.dup;
+					temp[0]++;
+					A.resize(temp);
+					temp[0]--;
+					A[temp[0]]=a.clone();
+
+				}
+				else{
+					throw new internal_Exception("This dimension different join is not supported.");
+				}
+			}
+		}
 
 		debug_check_func(A);
 		return A;
@@ -515,7 +573,10 @@ class array(T)
 	void opOpAssign(string op)(T a){
 		check_damage();
 
-		data=opBinary(op)(a).data;
+		array!T temp=opBinary!(op)(a);
+
+		data=temp.data;
+		shape=temp.shape;
 
 		debug_check_func();
 	}
@@ -523,7 +584,10 @@ class array(T)
 	void opOpAssign(string op)(array a){
 		check_damage();
 
-		data=opBinary(op)(a).data;
+		array!T temp=opBinary!(op)(a);
+
+		data=temp.data;
+		shape=temp.shape;
 
 		debug_check_func();
 	}
@@ -540,7 +604,7 @@ class array(T)
 		return A;
 	}
 
-	array map(T function(T) func){
+	array map(T delegate(T) func){
 		check_damage();
 
 		array!T A=clone();
@@ -553,8 +617,164 @@ class array(T)
 		return A;
 	};
 
+	array filter(T1)(bool delegate(T1) func){
+		check_damage();
 
-	private T3 to_D_array2(T3)(T3 A,int[] temp_index=[]){
+		if(shape.length>1&&!is(T1==array)){
+			throw new internal_Exception("Element type and function argument types are not equal.");
+		}
+		if(shape.length==1&&!is(T1==T)){
+			throw new internal_Exception("Element type and function argument types are not equal.");
+		}
+
+		array!T A=new array!T(shape);
+
+		uint n=0;
+
+		for (uint i=0;i<shape[0] ; i++) {
+			static if(is(T1==array)){
+				if(func(ia[i])){
+					A[n]=ia[i];
+					n++;
+				}
+			}
+			static if(is(T1==T)){
+				if(func(opIndex(i))){
+					A[n]=opIndex(i);
+					n++;
+				}
+			}
+		}
+
+		uint[] temp=A.shape.dup;
+
+		temp[0]=n;
+
+		A.resize(temp);
+
+		debug_check_func(A);
+
+		return A;
+	}
+
+	void each(T1)(void delegate(T1) func){
+		check_damage();
+
+		if(shape.length==0)return;
+		if(shape.length>1&&!is(T1==array)){
+			throw new internal_Exception("Element type and function argument types are not equal.");
+		}
+		if(shape.length==1&&!is(T1==T)){
+			throw new internal_Exception("Element type and function argument types are not equal.");
+		}
+
+		for (uint i=0;i<shape[0] ; i++) {
+			static if(is(T1==array)){
+				func(ia[i]);
+			}
+			static if(is(T1==T)){
+				func(opIndex(i));
+			}
+		}
+
+		debug_check_func();
+	}
+
+	T1 fold(T1)(T1 delegate(T1,T1) func){
+		return fold!(1,T1)(func);
+	}
+
+	T1 foldr(T1)(T1 delegate(T1,T1) func){
+		return fold!(1,T1)(func);
+	}
+
+	T1 foldl(T1)(T1 delegate(T1,T1) func){
+		check_damage();
+
+		if(shape.length==0){
+			throw new internal_Exception("You can not call fold with an empty array.");
+		}
+		return fold!(-1,T1)(func,shape[0]-1);
+	}
+
+	private T1 fold(const int direction, T1)(T1 delegate(T1,T1) func,uint n=0){
+		check_damage();
+
+		if(shape.length==0){
+			throw new internal_Exception("You can not call fold with an empty array.");
+		}
+		if(shape.length>1&&!is(T1==array)){
+			throw new internal_Exception("Element type and function argument types are not equal.");
+		}
+		if(shape.length==1&&!is(T1==T)){
+			throw new internal_Exception("Element type and function argument types are not equal.");
+		}
+
+		static if(direction==1){
+			if(n+1>=shape[0]){
+				debug_check_func();
+				static if(is(T1==array)){
+					return ia[n];
+				}
+				else{
+					return opIndex(n);
+				}
+			}
+			else{
+				T1 temp=fold!(direction,T1)(func,n+1);
+
+				static if(is(T1==array)){
+					T1 temp2=func(ia[n],temp);
+				}
+				else{
+					T1 temp2=func(opIndex(n),temp);
+				}
+
+				debug_check_func();
+				return temp2;
+			}
+		}
+		else{
+			if(n==0){
+				debug_check_func();
+				static if(is(T1==array)){
+					return ia[n];
+				}
+				else{
+					return opIndex(n);
+				}
+			}
+			else{
+				T1 temp=fold!(direction,T1)(func,n-1);
+
+				static if(is(T1==array)){
+					T1 temp2=func(ia[n],temp);
+				}
+				else{
+					T1 temp2=func(opIndex(n),temp);
+				}
+
+				debug_check_func();
+				return temp2;
+			}
+		}
+
+
+	}
+
+	T sum(){
+		check_damage();
+
+		T A=0;
+		foreach(e;data){
+			A+=e;
+		}
+		debug_check_func();
+		return A;
+	}
+
+
+	private T3 to_D_array2(T3)(T3 A,uint[] temp_index=[]){
 
 		static if(is(T3==string)||!isArray!(T3)){
 			if(temp_index.length!=shape.length)
@@ -582,4 +802,57 @@ class array(T)
 		return to_D_array2!(T1)(A);
 	}
 
+	uint count(T a){
+		check_damage();
+
+		uint A=0;
+		foreach(ref e;data){
+			if(e==a)A++;
+		}
+
+		debug_check_func();
+		return A;
+	}
+
+	uint count(bool delegate(T) func){
+		check_damage();
+
+		uint A=0;
+		foreach(e;data){
+			if(func(e))A++;
+		}
+
+		debug_check_func();
+		return A;
+	}
+
+	uint count(bool delegate(array) func){
+		check_damage();
+
+		if(shape.length==0)return 0;
+
+		uint A=0;
+		for(uint i=0;i<shape[0];i++){
+			if(func(ia[i]))A++;
+		}
+		debug_check_func();
+
+		return A;
+	}
+
+	array!T1 Get_cast(T1)(){
+		check_damage();
+		static if(is(T1==T)){
+			debug_check_func();
+			return clone();
+		}
+		else{
+			array!T1 A=new array!T1(shape);
+			foreach(i,e;data){
+				A.data[i]=to!(T1)(e);
+			}
+			debug_check_func();
+			return A;
+		}
+	}
 };
