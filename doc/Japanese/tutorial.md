@@ -280,3 +280,76 @@ writef("%s\n",data);
         [1,2,3]
 ]
 ```
+
+### スライスを使った代入
+
+例えば、次のように代入する事も出来ます。
+
+```
+import vec;
+import vec_math_tool;
+import std.stdio;
+import std.math;
+import std.conv;
+
+void main(){
+
+uint N=100000;
+
+array!uint A=array!uint.make([[1,2,3],[4,5,6]]);
+
+A[0..A.shape[0],2]=0;
+
+writeln(A);
+
+}
+
+```
+
+表示
+
+```
+[
+        [1,2,0],
+        [4,5,0]
+]
+
+```
+
+勿論、配列を代入する事も出来ます。
+
+```
+import vec;
+import vec_math_tool;
+import std.stdio;
+import std.math;
+import std.conv;
+
+void main(){
+
+uint N=100000;
+
+array!uint A=array!uint.make([[[1,2,3],[4,5,6]],[[4,5,6],[7,8,9]]]);
+
+A[0..A.shape[0],1]=array!uint.make([0,0,0]);
+
+writeln(A);
+
+}
+```
+
+表示
+
+```
+[
+        [
+                [1,2,3],
+                [0,0,0]
+        ],
+        [
+                [4,5,6],
+                [0,0,0]
+        ]
+]
+
+```

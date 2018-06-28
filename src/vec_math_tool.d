@@ -3,6 +3,7 @@ import vec_outside_Exception;
 import std.math;
 import std.conv;
 import std.random;
+import std.functional;
 
 bool vec_math_tool_OK(T)(){
   return is(T==real)||is(T==double)||is(T==float)||is(T==long)||is(T==ulong)||
@@ -53,7 +54,7 @@ array!T vec_math_tool_arange(T)(T stop){
 
   array!T A=new array!T([to!(uint)(temp)]);
 
-  T i=start;
+  T i=0;
   for (uint i2=0;i2<to!(uint)(temp);i2++) {
     A[i2]=i;
     i++;
@@ -104,6 +105,28 @@ array!T vec_math_tool_arange(T)(T start,T stop,T step){
   return A;
 }
 
+array!T vec_math_tool_generator(T)(T n1,T delegate(T) func,T n2,T n3){
+  T temp;
+
+  static if(is(T==float)||is(T==double)||is(T==real)){
+    temp=ceil((stop-start)/step);
+  }
+  else{
+    temp=(stop-start)/step;
+  }
+
+  array!T A=new array!T([to!(uint)(temp)]);
+
+  T i=start;
+  for (uint i2=0;i2<to!(uint)(temp);i2++) {
+    A[i2]=func(i);
+    i+=stop;
+  }
+
+  return A;
+}
+
+
 
 array!T vec_math_tool_int_uniform(T)(long a1,long a2,uint size){
   auto rnd = Random(unpredictableSeed);
@@ -124,3 +147,21 @@ array!T vec_math_tool_real_uniform(T)(real a1,real a2,uint size){
 
   return A;
 };
+
+array!T zeros(T,T2)(T2 shape) if (is(T2==int)||is(T2==int[])||is(T2==uint)||is(T2==uint[])){
+  return fill!(T)(shape,to!(T)(0));
+}
+
+array!T ones(T,T2)(T2 shape) if (is(T2==int)||is(T2==int[])||is(T2==uint)||is(T2==uint[])){
+  return fill!(T)(shape,to!(T)(1));
+}
+
+array!T fill_generator(T)(in int shape,in T elem){
+  return vec_math_tool_fill!(T)([shape],elem);
+}
+
+array!T fill_generator(T)(in int[] shape,in T elem){
+  array!T A=new array!T(shape);
+  A=A.map((x)=>elem);
+  return A;
+}

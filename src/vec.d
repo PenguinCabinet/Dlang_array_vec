@@ -5,7 +5,7 @@ import std.string;
 import core.vararg;
 import std.conv;
 import std.traits;
-
+import std.parallelism;
 
 
 class array(T)
@@ -134,17 +134,13 @@ class array(T)
 		}
 	}
 
-	private void check_damage(){
-
+  invariant(){
 		if(shape.length>0){
-			if(data.length!=shape.fold!( (a, b) => a*b)){
-				throw new internal_Exception("Shape length and data length are not equal, array is corrupted.");
-			};
+			assert(shape.fold!( (a, b) => a*b)!=0);
+			assert(data.length==shape.fold!( (a, b) => a*b));
 		}
 		else{
-			if(data.length>0){
-				throw new internal_Exception("Shape length and data length are not equal, array is corrupted.");
-			};
+			assert(data.length==0);
 		}
 	}
 
@@ -169,7 +165,6 @@ class array(T)
 	}
 
 	void resize(in uint[] size){
-		check_damage();
 		shape=size.dup;
 		if(size.length>0&&size.fold!( (a, b) => a*b)<=0){
 			throw new internal_Exception("The specified size is less than or equal to 0");
@@ -191,19 +186,19 @@ class array(T)
 	}
 
 	uint Get_dim(){
-		check_damage();
+
 		debug_check_func();
 		return shape.length;
 	};
 
 	uint[] Get_shape(){
-		check_damage();
+
 		debug_check_func();
 		return shape;
 	};
 
 	ref T index(in uint[] i_data){
-		check_damage();
+
 
 		uint I=0;
 
@@ -215,8 +210,9 @@ class array(T)
 		return data[I];
 	}
 
+
 	ref T opIndex(uint[] a ...){
-		check_damage();
+
 
 		uint[] index_data=new uint[a.length];
 		foreach (i,e; a){
@@ -227,14 +223,15 @@ class array(T)
 		return index(surface_index_to_index(index_data));
 	}
 
+
 	bool empty(){
-		check_damage();
+
 		debug_check_func();
 		return data.length==0;
 	}
 
 	void clear(){
-		check_damage();
+
 		data=[];
 		shape=[];
 		debug_check_func();
@@ -310,7 +307,7 @@ class array(T)
 
 		};
 		array opIndex(uint[] a ...){
-			check_damage();
+
 			uint[] index_data=new uint[a.length];
 			foreach (i,e; a){
 				index_data[i]=e;
@@ -323,26 +320,8 @@ class array(T)
 	index_array_class ia;
 
 
-	array opSlice(in uint a1,in uint a2){
-		check_damage();
-		auto ta1=surface_index_to_index([a1],false);
-		auto ta2=surface_index_to_index([a2-1],false);
-		uint[] size_data=[(ta2[0]+1)-ta1[0]];
-
-		if(shape.length>1){
-			size_data~=shape[1..$];
-		}
-
-		uint[] temp=new uint[shape.length];
-
-		temp[temp.length-1]=a1;
-
-		array!(T) A= new array!(T)(size_data);
-
-		slice(A,temp,size_data);
-
-		debug_check_func(A);
-		return A;
+	uint[] opSlice(uint a)(in uint a1,in uint a2){
+		return [a1,a2];
 	};
 
 	private string range_Make_str(in string a,in uint n){
@@ -382,7 +361,7 @@ class array(T)
 	}
 
 	override string toString(){
-		check_damage();
+
 		string A="";
 		toString(A);
 		debug_check_func();
@@ -415,30 +394,124 @@ class array(T)
 		temp(a);
 	};
 
-	void opIndexAssign(array a,uint[] a2 ...){
-		check_damage();
-
-		uint[] index_data=new uint[a2.length];
-		foreach (i,e; a2){
-			index_data[i]=e;
+	private void opIndexAssign2(T a,uint[] temp_index,uint n,opIndex_index_class[] args){
+		if(args.length==n){
+			opIndex(temp_index)=a;
+			return;
+		}
+		if (!args[n].Is_slice){
+			opIndexAssign2(a,temp_index~args[n].data1,n+1,args);
+		}
+		else{
+			uint[] temp=args[n].data2;
+			for (int i = temp[0]; i < temp[1]; i++){
+				opIndexAssign2(a,temp_index~i,n+1,args);
+			}
 		}
 
-		set(a,surface_index_to_index(index_data,false));
-
-		debug_check_func();
 	}
 
-	void opIndexAssign(T a,uint[] a2...){
-		check_damage();
+	private class opIndex_index_class{
 
-		opIndex(a2)=a;
+		bool Is_slice;
+
+		uint data1;
+		uint[] data2;
+
+		void opAssign(uint a){
+			data1=a;
+			Is_slice=false;
+		};
+
+		void opAssign(uint[] a){
+			data2=a;
+			Is_slice=true;
+		};
+
+	};
+
+	void opIndexAssign(T a,...){
+
+		opIndex_index_class[] args_data;
+
+		if(shape.length!=_arguments.length){
+			throw new internal_Exception("The dimension of index is not equal to shape.");
+		}
+
+		foreach(i;0..(_arguments.length)){
+			args_data~=new opIndex_index_class();
+			if (_arguments[i] == typeid(uint)||_arguments[i] == typeid(int)){
+				args_data[i]=va_arg!(uint)(_argptr);
+			}
+			else if (_arguments[i] == typeid(uint[])){
+				args_data[i]=va_arg!(uint[])(_argptr);
+			}
+		}
+
+		opIndexAssign2(a,[],0,args_data);
 
 		debug_check_func();
+	};
+
+	private void opIndexAssign4(array a,uint[] temp_index1,uint[] temp_index2=[],uint n2=0){
+		if(n2==0&&shape.length-temp_index1.length!=a.shape.length){
+			throw new internal_Exception("The assignment dimension is different.");
+		}
+		if(n2==0&&shape[temp_index1.length..$]!=a.shape){
+			throw new internal_Exception("The shape to be assigned is different.");
+		}
+
+		if(shape.length==temp_index1.length){
+			index(temp_index1)=a.index(temp_index2);
+		}
+		else{
+			for (uint i=0;i<a.shape[n2] ; i++) {
+				opIndexAssign4(a,temp_index1~i,temp_index2~i,n2+1);
+			}
+		}
+
 	}
+
+	private void opIndexAssign3(array a,uint[] temp_index,uint n,opIndex_index_class[] args){
+		if(args.length==n){
+			opIndexAssign4(a,temp_index,[]);
+			return;
+		}
+
+		if (!args[n].Is_slice){
+			opIndexAssign3(a,temp_index~args[n].data1,n+1,args);
+		}
+		else{
+			uint[] temp=args[n].data2;
+			for (int i = temp[0]; i < temp[1]; i++){
+				opIndexAssign3(a,temp_index~i,n+1,args);
+			}
+		}
+
+	}
+
+	void opIndexAssign(array a,...){
+
+		opIndex_index_class[] args_data;
+
+		foreach(i;0..(_arguments.length)){
+			args_data~=new opIndex_index_class();
+			if (_arguments[i] == typeid(uint)||_arguments[i] == typeid(int)){
+				args_data[i]=va_arg!(uint)(_argptr);
+			}
+			else if (_arguments[i] == typeid(uint[])){
+				args_data[i]=va_arg!(uint[])(_argptr);
+			}
+		}
+
+		opIndexAssign3(a,[],0,args_data);
+
+		debug_check_func();
+	};
 
 
 	array opUnary(string s)() if (s == "-") {
-		check_damage();
+
 
 		array!T A=clone();
 
@@ -450,7 +523,7 @@ class array(T)
 	}
 
 	array opBinary(string op)(T a) {
-		check_damage();
+
 
 		array!T A=clone();
 
@@ -496,7 +569,7 @@ class array(T)
 	}
 
 	array opBinary(string op)(array a) {
-		check_damage();
+
 
 		if(op!="~"){
 			if(shape!=a.shape){
@@ -571,7 +644,7 @@ class array(T)
 	}
 
 	void opOpAssign(string op)(T a){
-		check_damage();
+
 
 		array!T temp=opBinary!(op)(a);
 
@@ -582,7 +655,7 @@ class array(T)
 	}
 
 	void opOpAssign(string op)(array a){
-		check_damage();
+
 
 		array!T temp=opBinary!(op)(a);
 
@@ -594,7 +667,7 @@ class array(T)
 
 
 	array clone(){
-		check_damage();
+
 
 		array!T A= new array!T(shape);
 		A.data=data.dup;
@@ -605,10 +678,10 @@ class array(T)
 	}
 
 	array map(T delegate(T) func){
-		check_damage();
+
 
 		array!T A=clone();
-		foreach(ref e;A.data){
+		foreach(ref e;parallel(A.data)){
 			e=func(e);
 		};
 
@@ -618,7 +691,7 @@ class array(T)
 	};
 
 	array filter(T1)(bool delegate(T1) func){
-		check_damage();
+
 
 		if(shape.length>1&&!is(T1==array)){
 			throw new internal_Exception("Element type and function argument types are not equal.");
@@ -658,7 +731,7 @@ class array(T)
 	}
 
 	void each(T1)(void delegate(T1) func){
-		check_damage();
+
 
 		if(shape.length==0)return;
 		if(shape.length>1&&!is(T1==array)){
@@ -689,7 +762,7 @@ class array(T)
 	}
 
 	T1 foldl(T1)(T1 delegate(T1,T1) func){
-		check_damage();
+
 
 		if(shape.length==0){
 			throw new internal_Exception("You can not call fold with an empty array.");
@@ -698,7 +771,7 @@ class array(T)
 	}
 
 	private T1 fold(const int direction, T1)(T1 delegate(T1,T1) func,uint n=0){
-		check_damage();
+
 
 		if(shape.length==0){
 			throw new internal_Exception("You can not call fold with an empty array.");
@@ -763,7 +836,7 @@ class array(T)
 	}
 
 	T sum(){
-		check_damage();
+
 
 		T A=0;
 		foreach(e;data){
@@ -796,14 +869,14 @@ class array(T)
 	}
 
 	T1 to_D_array(T1)() if(!is(T1==string)||isArray!(T1)) {
-		check_damage();
+
 		T1 A;
 		debug_check_func();
 		return to_D_array2!(T1)(A);
 	}
 
 	uint count(T a){
-		check_damage();
+
 
 		uint A=0;
 		foreach(ref e;data){
@@ -815,7 +888,7 @@ class array(T)
 	}
 
 	uint count(bool delegate(T) func){
-		check_damage();
+
 
 		uint A=0;
 		foreach(e;data){
@@ -827,7 +900,7 @@ class array(T)
 	}
 
 	uint count(bool delegate(array) func){
-		check_damage();
+
 
 		if(shape.length==0)return 0;
 
